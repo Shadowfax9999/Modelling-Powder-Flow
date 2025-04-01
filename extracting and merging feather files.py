@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Apr  1 14:53:38 2025
-
-@author: charliemurray
-"""
-
 import pandas as pd
 import os
 from pathlib import Path
@@ -23,13 +15,16 @@ def merge_feather_files(root_folder, feather_file="merged_filtered_data.feather"
     merged_df = pd.concat(dataframes, ignore_index=True)
 
     # Ensure at least four columns exist
-    if merged_df.shape[1] < 4:
-        print("❌ Not enough columns to group by the first four.")
+    if merged_df.shape[1] < 5:
+        print("❌ Not enough columns to group by the first five.")
         return None
 
-    # Group by the first four columns
+    # Group by the first four columns and aggregate remaining columns
     key_columns = merged_df.columns[:4]  # First four columns
-    merged_df = merged_df.sort_values(by=list(key_columns))
+    value_columns = merged_df.columns[5:]  # Remaining columns
+
+    # Aggregate by joining values with a delimiter
+    merged_df = merged_df.groupby(list(key_columns), as_index=False).agg(lambda x: '|'.join(map(str, x.dropna().astype(str).tolist())))
 
     # Save as Feather
     merged_df.to_feather(feather_file)
